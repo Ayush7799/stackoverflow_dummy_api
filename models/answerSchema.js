@@ -12,6 +12,9 @@ const answerSchema = new mongoose.Schema({
     required: true,
   },
   content: { type: String, required: true },
+  downvotes: [{type: mongoose.Schema.Types.ObjectId, unique: true}],
+  upvotes: [{type: mongoose.Schema.Types.ObjectId, unique: true}],
+  commentIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
   created_at: { type: mongoose.Schema.Types.Date, default: new Date() },
   modified_at: { type: mongoose.Schema.Types.Date, default: new Date() },
 });

@@ -1,26 +1,31 @@
 import User from "../models/userSchema.js";
-import { generateToken } from "../services/jwtAuthentication.js";
+import {
+  loginUserSchema, registerUserSchema,
+} from "../utils/schemaValidation/userValidation.js";
+import { login, register } from "../services/user.js";
 
-export const register = async (req, res) => {
-  const { email } = req.body;
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    res.json({ message: "Email Already exists" });
-    return;
-  }
-  const newUser = new User(req.body);
-  await newUser.save();
-  res.status(201).json({ message: "User registered Succesfully", data: newUser });
-};
-
-export const login = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email, password });
-  if (!user) {
-    return res.render("login", {
-      error: "Invalid email or password",
+export const registerController = async (req, res) => {
+  const { error } = registerUserSchema.validate(req.body);
+  if (error) {
+    return res.json({
+      message: "Invalid Credentials Format",
+      error: error.message,
     });
   }
-  const token = generateToken(user.id);
-  return res.json({ message: "Succesfully signed in", data: user, token });
+  const resObj = await register(req,res);
+  return res.status(resObj.status).json(resObj.jsonData);
+};
+
+export const loginController = async (req, res) => {
+  const validation = loginUserSchema.validate(req.body);
+  if (validation.error) {
+    return res.json({
+      message: "Invalid Credentials Format",
+      error: validation.error.details,
+    });
+  }
+    // find user on the basis of their unique entity and after that compare the password if entity is valid
+
+  const resObj = await login(req,res);
+  return res.status(resObj.status).json(resObj.jsonData); 
 };

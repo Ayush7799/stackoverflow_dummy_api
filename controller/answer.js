@@ -1,65 +1,32 @@
-import Answer from "../models/answerSchema.js";
-import Comment from "../models/commentSchema.js";
-import Question from "../models/questionSchema.js";
 
-const addAnswer = async (req, res) => {
-  const answer = new Answer(req.body);
+import { addAnswer, deleteAnswer, updateAnswer, updateVotes } from "../services/answer.js";
+import { addAnswerSchema } from "../utils/schemaValidation/answerValidation.js";
 
-  if (answer.userId.toString() !== req.userId) {
-    res.json({ message: "Wrong Bearer Token" });
-    return;
-  }
-
-  const question = await Question.findById(req.body.questionId);
-
-  if (question.userId.toString() === req.userId) {
-    res.json({ message: "Question owner can't answer" });
-    return;
-  }
-  await answer.save();
-  return res.json({ message: "Answer successfully Added", data: answer });
-};
-
-const updateAnswer = async (req, res) => {
-  const answerId = req.query.answerId;
-  const updatedAnswer = {};
-  try {
-    const answer = await Answer.findById(answerId);
-    if (answer.userId.toString() !== req.userId) {
-      res.json({ message: "Wrong Bearer Token" });
-      return;
+const addAnswerController = async (req, res) => {
+  const validation = addAnswerSchema.validate(req.body);
+    if(validation.error){
+        return res.json({message: "Invalid Body Format", error: validation.error.details});
     }
-    updatedAnswer = await Answer.findByIdAndUpdate(
-      answerId,
-      { $set: { content: req.body.content, modifiedAt: Date.now() } },
-      { new: true }
-    );
-  } catch (e) {
-    console.log(e);
+  if (req.body.userId !== req.userId) {
+    return res.json({ message: "Unauthorized" });
   }
-
-  res.json({ message: "Answer Updated Successfully" , data: updatedAnswer});
+  const resObj = await addAnswer(req,res);
+  return res.status(resObj.status).json(resObj.jsonData);
 };
 
-const deleteAnswer = async (req, res) => {
-  const answerId = req.query.answerId;
-  
-  try {
-    const answer = await Answer.findById(answerId);
-    const question = await Question.findById(answer.questionId);
-    if (
-      answer.userId.toString() !== req.userId &&
-      question.userId.toString() !== req.userId
-    ) {
-      res.json({ message: "Wrong Bearer Token" });
-      return;
-    }
-    await Comment.deleteMany({ answerId: answerId });
-    await Answer.findByIdAndDelete(answerId);
-  } catch (e) {
-    console.log(e);
-  }
-  res.json({ message: "Successfully Deleted" });
+const updateAnswerController = async (req, res) => {
+  const resObj = await updateAnswer(req,res);
+  return res.status(resObj.status).json(resObj.jsonData);
 };
 
-export { addAnswer, updateAnswer, deleteAnswer };
+const deleteAnswerController = async (req, res) => {
+    const resObj = await deleteAnswer(req,res);
+    return res.status(resObj.status).json(resObj.jsonData);
+};
+
+const updateVotesController = async (req,res) => {
+    const resObj = await updateVotes(req,res);
+    return res.status(resObj.status).json(resObj.jsonData);
+}
+
+export { addAnswerController, updateAnswerController, deleteAnswerController, updateVotesController };

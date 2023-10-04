@@ -7,15 +7,15 @@ const generateToken = (user) => {
 };
 
 const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization.slice(7);
+  const token = req.headers.authorization;
   if (!token) {
     return res.status(401).json({ message: "No Token Provided" });
   }
-  jwt.verify(token, secret, (err, decode) => {
+  jwt.verify(token.slice(7), secret, (err, decode) => {
     if (err) {
       return res.status(403).json({ message: "Failed to authenticate token" });
     }
-    req.userId = decode;
+    req.userId = decode.userId;
     next();
   });
 };
