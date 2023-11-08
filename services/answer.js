@@ -2,13 +2,29 @@ import Answer from "../models/answerSchema.js";
 import Comment from "../models/commentSchema.js";
 import Question from "../models/questionSchema.js";
 import User from "../models/userSchema.js";
+
+const getAll = async (req,res) => {
+  let userId = req.query.userId;
+  let data;
+  if(userId){
+    data = await Answer.find({userId: userId})
+  }
+  else{
+    data = await Answer.find();
+  }
+
+  return {status: 200, jsonData: {message: "Answers fetched Successfully", data: data, page: "Answer"}}
+}
+
+
+
 const addAnswer = async (req, res) => {
   const count = await User.findOne(
     {_id: req.userId},
     {votes: 1}
   )
    if(count.votes<30){
-    return {status:409, jsonData: {message: "Not enough votes"}}
+    return {status:409, jsonData: {message: "Not enough points"}}
    }
   const question = await Question.findById(req.body.questionId);
   if (question.userId.toString() === req.userId) {
@@ -37,7 +53,6 @@ const updateAnswer = async (req, res) => {
   }
 
   return {status: 200 , jsonData: { message: "Answer Updated Successfully" , data: updatedAnswer}}
-
 };
 
 const deleteAnswer = async (req, res) => {
@@ -103,4 +118,4 @@ const updateVotes = async (req,res) => {
   return {status: 200, jsonData: {}}
 }
 
-export { addAnswer, updateAnswer, deleteAnswer, updateVotes };
+export { addAnswer, updateAnswer, deleteAnswer, updateVotes, getAll };

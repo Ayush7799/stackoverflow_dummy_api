@@ -1,31 +1,41 @@
 import User from "../models/userSchema.js";
 import {
-  loginUserSchema, registerUserSchema,
-} from "../utils/schemaValidation/userValidation.js";
-import { login, register } from "../services/user.js";
+  loginUserSchema,
+  registerUserSchema,
+} from "../utils/joiValidators/userValidation.js";
+import { getProfile, login, register } from "../services/user.js";
+import { logger } from "../utils/loggers/logger.js";
+import statusCodes from "../utils/responseInfo/statusCodes.js";
+import messages from "../utils/responseInfo/messages.js";
+import response from "../utils/responseInfo/response.js";
 
 export const registerController = async (req, res) => {
-  const { error } = registerUserSchema.validate(req.body);
-  if (error) {
-    return res.json({
-      message: "Invalid Credentials Format",
-      error: error.message,
-    });
+  try {
+    const resObj = await register(req, res);
+    return response(res,resObj.status,resObj.jsonData);
+  } catch (error) {
+    return response(res,statusCodes.INTERNAL_SERVER_ERROR,{ message: messages.INTERNAL_SERVER_ERROR });
   }
-  const resObj = await register(req,res);
-  return res.status(resObj.status).json(resObj.jsonData);
-};
+}
 
 export const loginController = async (req, res) => {
-  const validation = loginUserSchema.validate(req.body);
-  if (validation.error) {
-    return res.json({
-      message: "Invalid Credentials Format",
-      error: validation.error.details,
-    });
+  try {
+    const resObj = await register(req, res);
+    return response(res,resObj.status,resObj.jsonData);
+  } catch (error) {
+    return response(res,statusCodes.INTERNAL_SERVER_ERROR,{ message: messages.INTERNAL_SERVER_ERROR });
   }
-    // find user on the basis of their unique entity and after that compare the password if entity is valid
+};
 
-  const resObj = await login(req,res);
-  return res.status(resObj.status).json(resObj.jsonData); 
+export const getProfileController = async (req, res) => {
+  let resObj;
+  try {
+     resObj = await getProfile(req, res);
+    // return response(res,resObj.status,resObj.jsonData);
+  } catch (error) {
+    return response(res,statusCodes.INTERNAL_SERVER_ERROR,{ message: messages.INTERNAL_SERVER_ERROR });
+  }
+  // if (!resObj.jsonData.data) return res.render("404");
+  return res.render("index", { jsonData: resObj.jsonData.data });
+  // return res.status(resObj.status).json(resObj.jsonData);
 };

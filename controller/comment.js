@@ -1,9 +1,14 @@
 import Answer from "../models/answerSchema.js";
 import Comment from "../models/commentSchema.js";
 import Question from "../models/questionSchema.js";
-import { addComment, deleteComment, updateComment } from "../services/comment.js";
-import { addCommentSchema } from "../utils/schemaValidation/commentValidation.js";
+import { addComment, deleteComment, getAll, updateComment } from "../services/comment.js";
+import { addCommentSchema } from "../utils/joiValidators/commentValidation.js";
 
+
+const getAllController = async (req,res) => {
+  const resObj = await getAll(req,res);
+  return res.render('details',resObj);
+}
 
 const addCommentController = async (req, res) => {
   const validation = addCommentSchema.validate(req.body);
@@ -28,4 +33,4 @@ const deleteCommentController = async (req, res) => {
     return res.status(resObj.status).json(resObj.jsonData);
 };
 
-export { addCommentController, updateCommentController, deleteCommentController };
+export { addCommentController, updateCommentController, deleteCommentController,getAllController};

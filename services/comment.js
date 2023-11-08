@@ -2,6 +2,19 @@ import Answer from "../models/answerSchema.js";
 import Comment from "../models/commentSchema.js";
 import Question from "../models/questionSchema.js";
 
+const getAll = async (req,res) => {
+  let userId = req.query.userId;
+  let data;
+  if(userId){
+    data = await Comment.find({userId: userId})
+  }
+  else{
+    data = await Comment.find();
+  }
+
+  return {status: 200, jsonData: {message: "Answers fetched Successfully", data: data, page: "Comment"}}
+}
+
 
 const addComment = async (req, res) => { 
   req.body.createdAt = Date.now();
@@ -53,4 +66,4 @@ const deleteComment = async (req, res) => {
   return {status: 200, jsonData: { message: "Successfully Deleted" }};
 };
 
-export { addComment, updateComment, deleteComment };
+export { addComment, updateComment, deleteComment ,getAll};

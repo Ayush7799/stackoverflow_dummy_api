@@ -1,0 +1,6 @@
+<h1><%= jsonData.page %>s Page</h1>
+<div>
+    <% jsonData.data.forEach((data) => { %>
+    <a href="http://localhost:8080/questions/get-details?questionId=<%= data.questionId?data.questionId:data._id %>"><%= data.content %></a>
+    <% })%>
+</div>

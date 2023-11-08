@@ -1,20 +1,47 @@
 import Answer from "../models/answerSchema.js";
 import Comment from "../models/commentSchema.js";
 import Question from "../models/questionSchema.js";
+import { GET_ASYNC, SET_ASYNC, client } from "../utils/Database/redisConfig.js";
+import statusCodes from "../utils/responseInfo/statusCodes.js";
 
-const addQuestion = async (req, res) => {
-  const tags = req.body.tags;
-  tags = tags.map((tag) => tag.toLowerCase())
-  const uniqueTags = [...new Set(tags)];
-  req.body.tags = uniqueTags;
-  const createQuestion = await Question.create(req.body);
+const getAll = async (req, res) => {
+  let userId = req.query.userId;
+  let data;
+  if (userId) {
+    data = await Question.find({ userId: userId });
+  } else {
+    data = await Question.find();
+  }
   return {
-    status: 201,
+    status: 200,
     jsonData: {
-      message: "Question successfully Added",
-      data: createQuestion,
+      message: "Questions fetched Successfully",
+      data: data,
+      page: "Question",
     },
   };
+};
+
+const addQuestion = async (req, res) => {
+  try {
+    let tags = req.body.tags;
+    tags = tags.map((tag) => tag.toLowerCase());
+    const uniqueTags = [...new Set(tags)];
+    req.body.tags = uniqueTags;
+    const createdQuestion = await Question.create(req.body);
+    return {
+      status: statusCodes.CREATED,
+      jsonData: {
+        message: "Question successfully Added",
+        data: createdQuestion,
+      },
+    };
+  } catch (error) {
+    return {
+      status: statusCodes.INTERNAL_SERVER_ERROR,
+      jsonData: { message: error.message },
+    };
+  }
 };
 
 const deleteQuestion = async (req, res) => {
@@ -78,22 +105,36 @@ const updateQuestion = async (req, res) => {
   };
 };
 
-
-const getAll = async (req, res) => {
+const getQuestionDetails = async (req, res) => {
   const questionId = req.query.questionId;
-
+  console.log(questionId);
+  
   try {
-    const data = await Answer.find({ questionId }).populate({
-      path: "commentIds",
-    });
-    if (data) {
-      console.log("Id", data);
-
+    const reply = await client.get(`${questionId}`);
+    if(reply){
+      console.log("Using cached data");
       return {
         status: 200,
         jsonData: {
           message: "Question fetched successfully",
-          data: data,
+          data: JSON.parse(reply)
+        },
+      };
+    }
+
+    const data = await Answer.find({ questionId }).populate({
+      path: "commentIds",
+    });
+    console.log(data);
+    if (data) {
+      const question = await Question.findById(questionId);
+      data.question = question;
+      const savedResult = await client.set(`${questionId}`,JSON.stringify(data), 'EX', 5);
+      return {
+        status: 200,
+        jsonData: {
+          message: "Question fetched successfully",
+          data: { answerArray: data, question: question },
         },
       };
     } else {
@@ -116,10 +157,10 @@ const getAll = async (req, res) => {
   }
 };
 
-const updateVotes = async (req,res) => {
-  const {userId, questionId, flag} = req.body;
+const updateVotes = async (req, res) => {
+  const { userId, questionId, flag } = req.body;
   const question = await Answer.findById(questionId);
-  if(flag){
+  if (flag) {
     await Question.updateOne(
       { _id: questionId },
       { $addToSet: { upvotes: userId } }
@@ -128,12 +169,8 @@ const updateVotes = async (req,res) => {
       { _id: questionId },
       { $pull: { downvotes: userId } }
     );
-    await User.updateOne(
-      {_id: question.userId},
-      {$inc: {points: 3}}
-    )
-  }
-  else{
+    await User.updateOne({ _id: question.userId }, { $inc: { points: 3 } });
+  } else {
     await Question.updateOne(
       { _id: questionId },
       { $pull: { upvotes: userId } }
@@ -142,14 +179,29 @@ const updateVotes = async (req,res) => {
       { _id: questionId },
       { $addToSet: { downvotes: userId } }
     );
-    await User.updateOne(
-      {_id: question.userId},
-      {$inc: {points: -1}}
-    )
+    await User.updateOne({ _id: question.userId }, { $inc: { points: -1 } });
   }
 
-  return {status: 200, jsonData: {}}
-}
+  return { status: 200, jsonData: {} };
+};
 
+const searchByTags = async (req, res) => {
+  const tags = req.query.tags.trim();
+  const tagsArray = tags.split(",");
+  // console.log(tagsArray);
+  const data = await Question.find({ tags: { $in: tagsArray } });
+  return {
+    status: 200,
+    jsonData: { message: "Fetched Data Succesfully", data: data },
+  };
+};
 
-export { addQuestion, deleteQuestion, updateQuestion, updateVotes, getAll };
+export {
+  addQuestion,
+  deleteQuestion,
+  updateQuestion,
+  updateVotes,
+  getQuestionDetails,
+  searchByTags,
+  getAll,
+};

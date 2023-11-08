@@ -1,0 +1,15 @@
+
+<div>
+   <p>Name: <%= jsonData.name %></p>
+   <p>Email: <%= jsonData.email %></p>
+   <p>UserId: <%= jsonData._id.toString() %></p>
+   <a href="http://localhost:8080/questions/get-all?userId=<%= jsonData._id.toString() %>">
+    Questions
+   </a>
+   <a href="http://localhost:8080/answers/get-all?userId=<%= jsonData._id.toString() %>">
+    Answers
+   </a> <a href="http://localhost:8080/comments/get-all?userId=<%= jsonData._id.toString() %>">
+    Comments
+   </a>
+</div>
+

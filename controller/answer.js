@@ -1,6 +1,12 @@
 
-import { addAnswer, deleteAnswer, updateAnswer, updateVotes } from "../services/answer.js";
-import { addAnswerSchema } from "../utils/schemaValidation/answerValidation.js";
+import { addAnswer, deleteAnswer, getAll, updateAnswer, updateVotes } from "../services/answer.js";
+import { addAnswerSchema } from "../utils/joiValidators/answerValidation.js";
+
+const getAllController = async (req,res) => {
+  const resObj = await getAll(req,res);
+  if(!resObj.jsonData.data)return res.render('404');
+  return res.render('details',resObj);
+}
 
 const addAnswerController = async (req, res) => {
   const validation = addAnswerSchema.validate(req.body);
@@ -29,4 +35,4 @@ const updateVotesController = async (req,res) => {
     return res.status(resObj.status).json(resObj.jsonData);
 }
 
-export { addAnswerController, updateAnswerController, deleteAnswerController, updateVotesController };
+export { addAnswerController, updateAnswerController, deleteAnswerController, updateVotesController,getAllController };

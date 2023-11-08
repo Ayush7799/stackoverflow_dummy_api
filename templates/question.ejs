@@ -1,0 +1,17 @@
+<div>
+    <h3>Question:</h3>
+    <p>Content: <%= data.question.content %></p>
+    <p>Tags: <%= data.question.tags %></p>
+    <h3>Answers: </h3>
+    <% data.answerArray.forEach((answer) => { %>
+           <div>
+            <p>Answer: <%= answer.content %><p>
+                <% answer.commentIds.forEach((comment) => { %>
+                    <p>Comment: <%= comment.content %></p>
+                    <% })%>
+
+           </div>
+        <% })%>
+    <p></p>
+</div>
+
